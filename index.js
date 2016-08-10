@@ -7,52 +7,6 @@ var pageMod = require("sdk/page-mod");
 var pref = require("sdk/simple-prefs").prefs;
 var request = require("sdk/request");
 
-/*
-pageMod.PageMod({
-	include: /.*youtube\.com.*//*,
-	contentScriptFile: "./onLoad.js",
-	attachTo: "top",
-	onAttach: function(worker) {
-			console.log("Loading information for URL: " + tabs.activeTab.url);
-			worker.port.emit("loadInformation", tabs.activeTab.url);
-			worker.port.on("loadedInformation", function(url, time) {
-				youtubeURL = url;
-				watchTime = time;
-			});
-	}
-});
-*/
-
-
-// tabs.on("open", function(tab) {
-// 	console.log("Open triggered for url: " + tab.url);
-// 	if(tab.url.search(/.*youtube\.com.*/) === -1) {
-// 		console.log("URL does NOT match regex pattern");
-// 	}
-// 	var worker = tab.attach({contentScriptFile: "./onLoad.js"});
-// 	worker.port.emit("loadInformation", tabs.activeTab.url);
-// 	worker.port.on("loadedInformation", function(url, time) {
-// 		youtubeURL = url;
-// 		watchTime = time;
-// 	})
-// });
-//
-// tabs.on("pageshow", function(tab) {
-// 	console.log("Pageshow triggered for url: " + tab.url);
-// })
-//
-// var cm = require("sdk/context-menu");
-// cm.Item({
-//     label: "dummy",
-//     contentScript: 'self.on("context", function (node) {' +
-//         '  self.postMessage(document.URL);' +
-//         '  return false;' +
-//     '});',
-//     onMessage: function (pageUrl) {
-//         console.log(pageUrl);
-//     }
-// });
-
 //Create a button for this add-on
 var button = ToggleButton({
 	id: "mozilla-test",
@@ -65,17 +19,39 @@ var button = ToggleButton({
 	onChange: handleChange
 });
 
-//Make the button disabled by default - only enable for youtube pages
-//button.disabled = true;
+/*
+ * Make the button disabled by default - only enable for youtube pages
+ */
+button.disabled = true;
 
-//Create the panel that appears on button press
+/*
+ * Whenever a tab is loaded in, check its URL. If it's a youtube page, then
+ * go ahead and enable the button.
+ */
+tabs.on("ready", function(tab) {
+	if(tab.url.contains("youtube.com")) {
+		button.state(tab, {
+			"disabled": false
+		});
+	} else {
+		button.state(tab, {
+			"disabled": true
+		});
+	}
+});
+
+/*
+ * Create the panel that appears on button press
+ */
 var panel = panels.Panel({
 	contentURL: "./panel.html",
 	contentScriptFile: "./panel.js",
 	onHide: handleHide
 });
 
-//Make the panel appear when the button is pressed
+/*
+ * Make the panel appear when the button is pressed
+ */
 function handleChange(state) {
 	if(state.checked) {
 		panel.show({
@@ -86,6 +62,14 @@ function handleChange(state) {
 		panel.port.emit("show", getDeviceListString());
 		//panel.resize(200, 200);
 	}
+}
+
+/*
+ * Called when the panel is hidden- this makes sure the
+ * button state is correctly set
+ */
+function handleHide() {
+	button.state("window", {checked: false});
 }
 
 //Gets the trimmed deviceList variable
@@ -114,58 +98,10 @@ function getDeviceListArray() {
 
 var pageWorker = require("sdk/page-worker");
 
+/*
+ * Activated when the user clicks on a device to beam to
+ */
 panel.port.on("clicked-link", function(num) {
-	//debug info
-	//console.log("You clicked on link #" + num);
-	//console.log("This is the ID: " + getDeviceListArray()[num]);
-
-	//we send an http request to that ID
-	//console.log("Trying to send some test data!");
-
-	//Load in the URL of the youtube page we are on
-	/*
-	var search = "v=";
-	var url = tabs.activeTab.url;
-
-	var startIndex = url.indexOf(search);
-
-	if(startIndex === -1) {
-		console.log("On youtube, but not on a video. Returning.");
-		return;
-	}
-
-	var urlLength = -1;
-	if(url.indexOf("&") === -1) {
-		urlLength = url.length - startIndex;
-	} else {
-		urlLength = url.indexOf("&") - startIndex;
-	}
-
-	url = url.substr(url.indexOf(search) + search.length, urlLength);
-	console.log("Current video URL: " + url);
-
-	//Pull out the timestamp of the video right now
-	console.log("Current video time: " +
-		document.getElementsByClassName("ytp-time-current")[0].innerHTML);
-		*/
-
-	//console.log("Current video URL: " + youtubeURL);
-	//console.log("Current video time: " + watchTime);
-
-	//Send the data!
-	//post("Sending to " + getDeviceListArray()[num]);
-
-	/*
-	var worker = pageWorker.Page({
-		contentURL: tabs.activeTab.url,
-		contentScriptFile: "./onLoad.js"
-	});
-
-	worker.port.emit("loadInformation", tabs.activeTab.url);
-	worker.port.on("loadedInformation", function(u, t) {
-			sendData(u, t, num);
-		});*/
-
 	tabs.activeTab.attach({
 		contentScriptFile: "./onLoad.js",
 		onMessage: function(time) {
@@ -176,6 +112,7 @@ panel.port.on("clicked-link", function(num) {
 	panel.hide();
 });
 
+//Unused - resizes the panel to fit (but doesn't work yet)
 panel.port.on("resize", function({width, height}) {
 	//console.log("Resizing!");
 	console.log("Current size: " + panel.width + ", " + panel.height);
@@ -183,28 +120,10 @@ panel.port.on("resize", function({width, height}) {
 	panel.resize(width, height);
 });
 
-function handleHide() {
-	button.state("window", {checked: false});
-}
-
 /*
- * Whenever a tab is loaded in, check its URL. If it's a youtube page, then
- * go ahead and enable the button.
+ * Extracts useful information from a youtube URL - specifically,
+ * the "watch" id. Will also later extract the playlist info.
  */
- /*
-tabs.on("ready", function(tab) {
-	if(tab.url.contains("youtube.com")) {
-		button.state(tab, {
-			"disabled": false
-		});
-	} else {
-		button.state(tab, {
-			"disabled": true
-		});
-	}
-});
-*/
-
 function trimURL(url) {
 	var search = "v=";
 
@@ -228,6 +147,13 @@ function trimURL(url) {
 	return url;
 }
 
+/*
+ * Small helper method that sends data to the server.
+ * @param url: The "watch" url, as from the trimURL() method
+ * @param time: The current video time, as from the "onLoad" script
+ * @param num: The 0-based number of the link clicked on in the panel. Used
+ *		for figuring out the ID of the device to send to
+ */
 function sendData(url, time, num) {
 	var to = getDeviceListArray()[num];
 	var str = "To: " + to + " URL: " + url + " @ " + time;
@@ -235,11 +161,15 @@ function sendData(url, time, num) {
 }
 
 //~~~~~Beyond this are HTTP based functions~~~~~//
-var mainURL = "http://api-m2x.att.com/v2/devices/";
-var APIKey = "a5b00c642f703ee1060b261b2ff303e2";
-var deviceKey = "b4aa9506d20bef737ee803df8e1dd05a";
+var mainURL = "http://api-m2x.att.com/v2/devices/"; //Base server url
+var APIKey = "a5b00c642f703ee1060b261b2ff303e2";    //API key
+var deviceKey = "b4aa9506d20bef737ee803df8e1dd05a"; //Specific to AT&T M2X API
 
-//POST a string to the given stream
+/*
+ * PUT a string to the given stream
+ * @param to: The stream ID (same as device you want to send to's ID)
+ * @param str: The string to send
+ */
 function put(to, str) {
 	var URL = mainURL + deviceKey + "/streams/" + to + "/value";
 	var CONTENT = "{\"value\": \"" + str + "\"}";

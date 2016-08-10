@@ -1,13 +1,8 @@
 /*
- * @param text: The "deviceList" preference
+ * @param deviceList: The trimmed "deviceList" preference
  */
 self.port.on("show", function (deviceList) {
- 	//Load in the list dynamically here
-
-//	document.getElementById("content").addEventListener("click", function() {
-//		self.port.emit("hide");
-//	});
-
+	//Populate the panel's HTML based on the devices we know
 
 	var content = "";
 
@@ -15,16 +10,11 @@ self.port.on("show", function (deviceList) {
 		content = "<b>Failed to read devices- check settings</b>";
 	} else {
 		for(var i = 0; i < deviceList.length / 6; i++) {
-				//arr.push(deviceList.substr(i * 6, 6));
 				content = content + "<a href=#" + i + " class='link'>[Test] ID = " +
 					deviceList.substr(i * 6, 6) + "</a>\n<hr>\n";
 		}
 	}
 
-
-	//document.getElementById("content").innerHTML =
-	//	"<a href='#1'>[Test] George's Android Phone</a>" +
-	//	"<hr>";
 	document.getElementById("content").innerHTML = content;
 
 	//Makes the panel close when a link is clicked on - forward the event to main
@@ -32,9 +22,8 @@ self.port.on("show", function (deviceList) {
 	for(var j = 0; j < links.length; j++) {
 			links[j].addEventListener("click", clickListener(j));
 	}
-	//document.getElementById("link").addEventListener("click", function() {
-	//	self.port.emit("clicked-link");
-	//})
+
+	//Unused resize code below
 
 	//console.log("panel width: " + document.getElementById("content").clientWidth);
 	//console.log("panel height: " + document.getElementById("content").clientHeight);
@@ -54,6 +43,5 @@ self.port.on("show", function (deviceList) {
 function clickListener(num) {
 	return function() {
 		self.port.emit("clicked-link", num);
-		//self.port.emit("send");
 	};
 }
