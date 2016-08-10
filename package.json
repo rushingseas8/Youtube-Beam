@@ -1,0 +1,36 @@
+{
+  "title": "Youtube Beam",
+  "name": "youtubesharingplugin",
+  "version": "0.0.1",
+  "description": "Allows the fast sharing of youtube videos to connected devices.",
+  "main": "index.js",
+  "author": "George Aleksandrovich",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "MIT",
+  "keywords": [
+    "jetpack"
+  ],
+  "preferences": [{
+	"name": "deviceName",
+	"title": "Public Device Name",
+	"description": "This is the name that appears to other devices.",
+	"type": "string",
+	"value": "Sample Name"
+  },
+  {
+	"name": "deviceID",
+	"title": "Device ID",
+	"description": "An ID that uniquely identifies this device. NOTE: You cannot change this value. Any modification made here will NOT be saved.",
+	"type": "string"
+  },
+  {
+	"name": "deviceList",
+	"title": "Saved Devices",
+	"description": "A list of devices that appear when you click on the addon button. Separate multiple entries with spaces, commas, or semicolons.",
+	"type": "string",
+	"value": "000001, 000002"
+  }]
+}
